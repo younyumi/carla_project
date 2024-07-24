@@ -1,0 +1,111 @@
+cmake_minimum_required(VERSION 3.5.1)
+project(vehicle_dynamics_interface)
+
+option(LIBCARLA_BUILD_DEBUG "Build debug configuration" ON)
+option(LIBCARLA_BUILD_RELEASE "Build release configuration" ON)
+option(LIBCARLA_BUILD_TEST "Build unit tests" ON)
+
+
+message(STATUS "Build debug:   ${LIBCARLA_BUILD_DEBUG}")
+message(STATUS "Build release: ${LIBCARLA_BUILD_RELEASE}")
+message(STATUS "Build test:    ${LIBCARLA_BUILD_TEST}")
+
+
+set(libcarla_lib_path ${PROJECT_SOURCE_DIR}/../libcarla-install/lib)
+set(external_lib_path ${PROJECT_SOURCE_DIR}/../../../carla-0.9.13/Build)
+set(libcarla_source_path ${PROJECT_SOURCE_DIR}/../../../carla-0.9.13/LibCarla/source)
+
+message(STATUS "External lib path: ${external_lib_path}")
+
+file(GLOB libcarla_libs
+  ${libcarla_lib_path}/*.so
+  ${libcarla_lib_path}/*.a
+)
+
+file(GLOB external_libs_include
+  ${external_lib_path}/*/include
+)
+
+set(ORIGINAL_CARLA_LIB_PATH ${PROJECT_SOURCE_DIR}/../../../carla-0.9.13/Examples/CppClient/libcarla-install)
+
+file(GLOB ORIGINAL_LIBS
+  ${ORIGINAL_CARLA_LIB_PATH}/lib/*.so*
+  ${ORIGINAL_CARLA_LIB_PATH}/lib/*.a
+)
+
+file(GLOB libcarla_test_headers
+  "${libcarla_source_path}/carla/"   
+  "${libcarla_source_path}/carla/client"
+  "${libcarla_source_path}/carla/geom"
+  "${libcarla_source_path}/carla/image"
+  "${libcarla_source_path}/carla/nav"
+  "${libcarla_source_path}/carla/opendrive"
+  "${libcarla_source_path}/carla/pointcloud"
+  "${libcarla_source_path}/carla/profiler"
+  "${libcarla_source_path}/carla/road"
+  "${libcarla_source_path}/carla/rpc"
+  "${libcarla_source_path}/carla/rss"
+  "${libcarla_source_path}/carla/sensor"
+  "${libcarla_source_path}/carla/streaming"
+  "${libcarla_source_path}/carla/trafficmanager"
+  "${libcarla_source_path}/test/"
+)
+
+# include_directories 
+include_directories(${ORIGINAL_CARLA_LIB_PATH}/include)
+include_directories(${libcarla_test_headers})
+
+include_directories(
+  "../../../carla-0.9.13/Build/boost-1.72.0-c10-install/include/"
+  "../../../carla-0.9.13/Build/gtest-1.8.1-c10-libcxx-install/include/"
+  "../../../carla-0.9.13/Build/gtest-1.8.1-c10-libstdcxx-install/include/"
+  "../../../carla-0.9.13/Build/libpng-1.6.37-install/include/"
+  "../../../carla-0.9.13/Build/llvm-8.0-install/include/"
+  "../../../carla-0.9.13/Build/patchelf-install/include/"
+  "../../../carla-0.9.13/Build/proj-install/include/"
+  "../../../carla-0.9.13/Build/recast-0b13b0-c10-install/include/"
+  "../../../carla-0.9.13/Build/rpclib-v2.2.1_c5-c10-libstdcxx-install/include/"
+  "../../../carla-0.9.13/Build/sqlite-install/include/"
+  "../../../carla-0.9.13/Build/xerces-c-3.2.3-install/include/"
+  "${PROJECT_SOURCE_DIR}/src"      # src directory 포함
+)
+
+
+file(GLOB libcarla_test_sources
+  "${libcarla_source_path}/carla/client/*.cpp"
+  "${libcarla_source_path}/carla/geom/*.cpp"
+  "${libcarla_source_path}/carla/nav/*.cpp"
+  "${libcarla_source_path}/carla/opendrive/*.cpp"
+  "${libcarla_source_path}/carla/opendrive/parser/*.cpp"
+  "${libcarla_source_path}/carla/profiler/*.cpp"
+  "${libcarla_source_path}/carla/road/*.cpp"
+  "${libcarla_source_path}/carla/road/element/*.cpp"
+  "${libcarla_source_path}/carla/road/object/*.cpp"
+  "${libcarla_source_path}/carla/rpc/*.cpp"
+  "${libcarla_source_path}/carla/rss/*.cpp"
+  "${libcarla_source_path}/carla/sensor/*.cpp"
+  "${libcarla_source_path}/carla/sensor/data/*.cpp"
+  "${libcarla_source_path}/carla/sensor/s11n/*.cpp"
+  "${libcarla_source_path}/carla/streaming/*.cpp"
+  "${libcarla_source_path}/carla/trafficmanager/*.cpp"
+  "${libcarla_source_path}/carla/*.cpp"
+  "${libcarla_source_path}/test/*.cpp"
+  "${libcarla_source_path}/test/${carla_config}/*.cpp"
+  "${libcarla_source_path}/test/common/*.cpp"
+)
+
+# main.cpp에 KinematicBicycle 포함해서 컴파일. 실행파일 vehicle_dynamic_interface
+add_executable(vehicle_dynamics_interface src/main.cpp src/KinematicBicycle.cpp)
+
+find_library(
+  RPCLIB
+  NAMES librpc.a
+  HINTS ${libcarla_lib_path}
+)
+
+target_link_libraries(vehicle_dynamics_interface ${ORIGINAL_LIBS})
+
+if (CARLA_VERSION)
+  configure_file(${libcarla_source_path}/carla/Version.h.in ${libcarla_source_path}/carla/Version.h)
+endif()
+
